@@ -1,0 +1,166 @@
+package com.company;
+
+import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class onlineExam {
+
+    private static final String USERNAME = "admin";
+    private static final String PASSWORD = "password";
+    private static final int EXAM_DURATION = 60; // Duration of exam in minutes
+
+    private static Scanner scanner;
+    private static Timer timer;
+    private static boolean isLoggedIn;
+
+    public static void main(String[] args) {
+
+        scanner = new Scanner(System.in);
+        timer = new Timer();
+        isLoggedIn = false;
+
+        while (!isLoggedIn) {
+            System.out.println("Please enter your username: ");
+            String username = scanner.nextLine();
+
+            System.out.println("Please enter your password: ");
+            String password = scanner.nextLine();
+
+            if (username.equals(USERNAME) && password.equals(PASSWORD)) {
+                isLoggedIn = true;
+                System.out.println("Login successful!");
+            } else {
+                System.out.println("Invalid username or password. Please try again.");
+            }
+        }
+
+        while (isLoggedIn) {
+            System.out.println("Please select an option: ");
+            System.out.println("1. Start Exam");
+            System.out.println("2. Logout");
+
+            int option = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+
+            switch (option) {
+                case 1:
+                    startExam();
+                    break;
+                case 2:
+                    isLoggedIn = false;
+                    System.out.println("Logout successful!");
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
+            }
+        }
+
+        scanner.close();
+    }
+
+    private static void startExam() {
+        System.out.println("Welcome to the online examination system!");
+
+        // Set up questions and answers
+        String[] questions = {
+                "What is the capital of India?",
+                "What is the largest continent in the world?",
+                "What is the smallest country in the world?",
+                "Who painted the Mona Lisa?",
+                "Who is the founder of Microsoft?"
+        };
+
+        String[][] answerOptions = {
+                {"Delhi", "Mumbai", "Kolkata", "Chennai"},
+                {"Asia", "Europe", "Africa", "North America"},
+                {"Vatican City", "Monaco", "Nauru", "Tuvalu"},
+                {"Leonardo da Vinci", "Vincent van Gogh", "Pablo Picasso", "Michelangelo"},
+                {"Bill Gates", "Steve Jobs", "Mark Zuckerberg", "Larry Page"}
+        };
+
+        int[] correctAnswers = {0, 0, 0, 0, 0}; // Index of correct answer for each question
+
+        // Randomize order of questions and answer options
+        shuffleQuestions(questions, answerOptions, correctAnswers);
+
+        int totalQuestions = questions.length;
+        int[] selectedAnswers = new int[totalQuestions];
+
+        // Start timer for exam
+        timer.schedule(new TimerTask() {
+            int remainingTime = EXAM_DURATION * 60; // Convert minutes to seconds
+
+            @Override
+            public void run() {
+                if (remainingTime <= 0) {
+                    endExam(selectedAnswers, correctAnswers);
+                    cancel();
+                } else {
+                    int minutes = remainingTime / 60;
+                    int seconds = remainingTime % 60;
+                    System.out.printf("Time remaining: %d:%02d\n", minutes, seconds);
+                    remainingTime--;
+                }
+            }
+        }, 0, 1000); // Update timer every second
+
+        // Display questions and answer options
+        for (int i = 0; i < totalQuestions; i++) {
+            System.out.println("Question " + (i + 1) + ": " + questions[i]);
+            for (int j = 0; j < answerOptions[i].length; j++) {
+                System.out.println((j + 1) + ". " + answerOptions[i][j]);
+            }
+
+            System.out.println("Please select an answer (1-" + answerOptions[i].length + "):");
+            int selectedAnswer = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+            selectedAnswers[i] = selectedAnswer - 1; // Store index of selected answer
+        }
+
+        // End exam and display result
+        endExam(selectedAnswers, correctAnswers);
+    }
+
+    private static void endExam(int[] selectedAnswers, int[] correctAnswers) {
+        int totalQuestions = selectedAnswers.length;
+        int totalCorrect = 0;
+
+        for (int i = 0; i < totalQuestions; i++) {
+            if (selectedAnswers[i] == correctAnswers[i]) {
+                totalCorrect++;
+            }
+        }
+
+        double percentageCorrect = (double) totalCorrect / totalQuestions * 100;
+
+        System.out.printf("You answered %d out of %d questions correctly (%.2f%%).\n",
+                totalCorrect, totalQuestions, percentageCorrect);
+
+        timer.cancel();
+    }
+
+    private static void shuffleQuestions(String[] questions, String[][] answerOptions, int[] correctAnswers) {
+        int totalQuestions = questions.length;
+
+        for (int i = 0; i < totalQuestions; i++) {
+            // Swap question with random question
+            int randomIndex = (int) (Math.random() * totalQuestions);
+            String tempQuestion = questions[i];
+            questions[i] = questions[randomIndex];
+            questions[randomIndex] = tempQuestion;
+
+            // Swap answer options with corresponding answer options of random question
+            String[] tempAnswerOptions = answerOptions[i];
+            answerOptions[i] = answerOptions[randomIndex];
+            answerOptions[randomIndex] = tempAnswerOptions;
+
+            // Swap correct answer with corresponding correct answer of random question
+            int tempCorrectAnswer = correctAnswers[i];
+            correctAnswers[i] = correctAnswers[randomIndex];
+            correctAnswers[randomIndex] = tempCorrectAnswer;
+        }
+    }
+}
+
